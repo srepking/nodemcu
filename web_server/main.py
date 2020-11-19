@@ -21,6 +21,7 @@ response_template = """HTTP/1.0 200 OK
 import machine
 import ntptime, utime
 from machine import RTC
+from machine import Pin
 from time import sleep
 
 try:
@@ -47,11 +48,29 @@ def dummy():
 
     return response_template % body
 
-pin = machine.Pin(10, machine.Pin.IN)
+def switch():
+    switch = Pin(4, Pin.IN)
+    switch_status = switch.value()
+    if switch_status == 0:
+        body = "Your switch is off."
+        return response_template % body
+    if switch_status == 1:
+        body = "Your switch is on."
+        return response_template % body
+    else:
+        return response_template % "I have no idea what your switch is doing."
+
+def light():
+    adc = machine.ADC(0)
+    body = "{value:" + str(adc.read()) + "}"
+    return response_template % body
+#pin = machine.Pin(10, machine.Pin.IN)
 
 handlers = {
     'time': time,
     'dummy': dummy,
+    'switch': switch,
+    'light': light,
 }
 
 def main():
@@ -86,6 +105,7 @@ def main():
         client_s.send(b"\r\n".join([line.encode() for line in response.split("\n")]))
 
         client_s.close()
-        print()
+        print("Done")
+
 
 main()
